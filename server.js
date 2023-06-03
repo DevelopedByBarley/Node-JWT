@@ -3,7 +3,12 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const connection = require('./config/database');
+const authenticateToken = require('./middleware/userAuthentication')
+
+
 
 
 
@@ -25,36 +30,67 @@ const posts = [
 ]
 
 app.get('/posts', authenticateToken, (req, res) => {
-    res.json(posts.filter(post => post.userName === req.user.name))
+    res.json(posts)
 })
 
-app.post('/login', (req, res) => {
-    // Authenticate user
+app.post('/register', async (req, res) => {
+    const userName = req.body.userName;
+    const password = req.body.password;
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPw = await bcrypt.hash(password, salt);
+    const query = 'INSERT INTO `super_admin` (`s_adminId`, `userName`, `password`, `createdAt`) VALUES (NULL, ?, ?, current_timestamp())';
+    const values = [userName, hashedPw];
+    connection.query(query, values, function (err, results, fields) {
+        if (err) throw err;
+        console.log('Sikeres beszúrás!');
+    });
+})
+
+app.post('/login', async (req, res) => {
 
     const userName = req.body.userName;
-    const user = { name: userName };
+    const password = req.body.password;
+    const query = 'SELECT * FROM `super_admin` WHERE `userName` = ?'
 
-    const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
+    connection.query(query, [userName], async function (err, results, fields) {
 
-    res.json({ accessToken: accessToken })
+        const passwordIsValid = await bcrypt.compare(password, results[0].password);
+
+        if (!passwordIsValid) return res.sendStatus(403);
+
+        const user = { name: userName };
+
+
+        const accessToken = generateAccessToken(user);
+        const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1m' });
+
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            // itt további opciókat adhatsz meg a cookie-hoz, például expires, maxAge, stb.
+        });
+        res.json({ accessToken: accessToken })
+    });
 })
 
 
-
-//Middleware
-
-function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];   
-
-    if(token == null) return res.sendStatus(401);
-
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+app.post('/token', (req, res) => {
+    const refreshToken = req.body.token;
+    if(refreshToken == null) return res.sendStatus(401);
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
         if(err) return res.sendStatus(403);
-        req.user = user;
-        next();
+        const accessToken = generateAccessToken({user: user.name});
+        res.json({accessToken:  accessToken});
     })
+})
 
+function generateAccessToken(user) { 
+    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15s' })
 }
+
+
+
+
 
 app.listen(3000);

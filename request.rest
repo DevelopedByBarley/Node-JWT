@@ -1,11 +1,34 @@
 GET http://localhost:3000/posts
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSmltIiwiaWF0IjoxNjg1NzA5MDc2fQ.MdwisumRWAjzPNXdk97sFHl-gfp4W7tUErvNwPvMWC0
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiSmltIiwiaWF0IjoxNjg1ODA5MjA1LCJleHAiOjE2ODU4MDkyMjB9.qZ6hwh9_s-BMx59Fhh0RVrv-S16NTKhljpFSX7IBgKA
+
+
 ###
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+    "userName": "Jim",
+    "email": "ImJim93@gmail.com",
+    "password": "ImJim12345"
+}
 
 
+###
+POST http://localhost:3000/token
+Content-Type: application/json
+
+{
+    "token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSmltIiwiaWF0IjoxNjg1ODA5MTQ5LCJleHAiOjE2ODU4MDkyMDl9.EPGHl8m_cHs2zQphDv_R49hIWxkQz9nhU8Q_186390Y"
+}
+
+
+
+###
 POST http://localhost:3000/login
 Content-Type: application/json
 
 {
-    "userName": "Jim"
+    "userName": "Jim",
+    "email": "ImJim93@gmail.com",
+    "password": "ImJim12345"
 }
