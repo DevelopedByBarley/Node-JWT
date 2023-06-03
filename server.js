@@ -14,23 +14,13 @@ const authenticateToken = require('./middleware/userAuthentication')
 
 app.use(express.json());
 
-const posts = [
-    {
-        userName: "Kyle",
-        title: "Post1"
-    },
-    {
-        userName: "Jim",
-        title: "Post2"
-    },
-    {
-        userName: "Cartman",
-        title: "Post13"
-    },
-]
-
 app.get('/posts', authenticateToken, (req, res) => {
-    res.json(posts)
+    const userName = req.user.name;
+    const query = 'SELECT * FROM `super_admin` WHERE `userName` = ?';
+
+    connection.query(query, [userName], async function (err, results, fields) {
+        console.log(results)
+    })
 })
 
 app.post('/register', async (req, res) => {
